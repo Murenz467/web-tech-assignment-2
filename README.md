@@ -712,3 +712,5 @@ Response: Status 204 No Content
 6. **Bonus - User Profile**: Comprehensive user management with custom response wrappers
 
 All endpoints are fully functional and ready for testing!
+#   w e b - t e c h - a s s i g n m e n t - 2  
+ 
