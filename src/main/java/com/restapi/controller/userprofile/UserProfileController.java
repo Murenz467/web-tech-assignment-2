@@ -8,6 +8,7 @@ import com.restapi.util.ApiResponse;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -43,15 +44,17 @@ public class UserProfileController {
      */
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<?>> getUserById(@PathVariable Long userId) {
-        return userProfiles.stream()
+        Optional<UserProfile> userOpt = userProfiles.stream()
                 .filter(user -> user.getUserId().equals(userId))
-                .findFirst()
-                .map(user -> {
-                    ApiResponse<UserProfile> response = new ApiResponse<>(true, "User retrieved successfully", user);
-                    return ResponseEntity.ok((ResponseEntity<ApiResponse<?>>) (Object) ResponseEntity.ok(response));
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null)));
+                .findFirst();
+
+        if (userOpt.isPresent()) {
+            ApiResponse<UserProfile> response = new ApiResponse<>(true, "User retrieved successfully", userOpt.get());
+            return ResponseEntity.ok(response);
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null));
     }
 
     /**
@@ -59,15 +62,16 @@ public class UserProfileController {
      */
     @GetMapping("/search/username")
     public ResponseEntity<ApiResponse<UserProfile>> searchByUsername(@RequestParam String username) {
-        return userProfiles.stream()
+        Optional<UserProfile> userOpt = userProfiles.stream()
                 .filter(user -> user.getUsername().equalsIgnoreCase(username))
-                .findFirst()
-                .map(user -> {
-                    ApiResponse<UserProfile> response = new ApiResponse<>(true, "User found", user);
-                    return ResponseEntity.ok(response);
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(false, "User with username " + username + " not found", null)));
+                .findFirst();
+
+        if (userOpt.isPresent()) {
+            return ResponseEntity.ok(new ApiResponse<>(true, "User found", userOpt.get()));
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "User with username " + username + " not found", null));
     }
 
     /**
@@ -83,27 +87,7 @@ public class UserProfileController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(false, "No users found in " + country, null));
         }
-        ApiResponse<List<UserProfile>> response = new ApiResponse<>(true, "Users from " + country + " retrieved successfully", results);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * GET /api/users/age-range - Get users by age range
-     */
-    @GetMapping("/age-range")
-    public ResponseEntity<ApiResponse<List<UserProfile>>> getUsersByAgeRange(
-            @RequestParam int minAge,
-            @RequestParam int maxAge) {
-        List<UserProfile> results = userProfiles.stream()
-                .filter(user -> user.getAge() >= minAge && user.getAge() <= maxAge)
-                .collect(Collectors.toList());
-
-        if (results.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, "No users found in age range " + minAge + "-" + maxAge, null));
-        }
-        ApiResponse<List<UserProfile>> response = new ApiResponse<>(true, "Users in age range retrieved successfully", results);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Users from " + country + " retrieved successfully", results));
     }
 
     /**
@@ -114,8 +98,8 @@ public class UserProfileController {
         userProfile.setUserId(nextId++);
         userProfile.setActive(true);
         userProfiles.add(userProfile);
-        ApiResponse<UserProfile> response = new ApiResponse<>(true, "User profile created successfully", userProfile);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(true, "User profile created successfully", userProfile));
     }
 
     /**
@@ -123,21 +107,23 @@ public class UserProfileController {
      */
     @PutMapping("/{userId}")
     public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable Long userId, @RequestBody UserProfile updatedUser) {
-        return userProfiles.stream()
+        Optional<UserProfile> userOpt = userProfiles.stream()
                 .filter(user -> user.getUserId().equals(userId))
-                .findFirst()
-                .map(user -> {
-                    user.setUsername(updatedUser.getUsername());
-                    user.setEmail(updatedUser.getEmail());
-                    user.setFullName(updatedUser.getFullName());
-                    user.setAge(updatedUser.getAge());
-                    user.setCountry(updatedUser.getCountry());
-                    user.setBio(updatedUser.getBio());
-                    ApiResponse<UserProfile> response = new ApiResponse<>(true, "User profile updated successfully", user);
-                    return ResponseEntity.ok(response);
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null)));
+                .findFirst();
+
+        if (userOpt.isPresent()) {
+            UserProfile user = userOpt.get();
+            user.setUsername(updatedUser.getUsername());
+            user.setEmail(updatedUser.getEmail());
+            user.setFullName(updatedUser.getFullName());
+            user.setAge(updatedUser.getAge());
+            user.setCountry(updatedUser.getCountry());
+            user.setBio(updatedUser.getBio());
+            return ResponseEntity.ok(new ApiResponse<>(true, "User profile updated successfully", user));
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null));
     }
 
     /**
@@ -145,16 +131,17 @@ public class UserProfileController {
      */
     @PatchMapping("/{userId}/activate")
     public ResponseEntity<ApiResponse<?>> activateUser(@PathVariable Long userId) {
-        return userProfiles.stream()
+        Optional<UserProfile> userOpt = userProfiles.stream()
                 .filter(user -> user.getUserId().equals(userId))
-                .findFirst()
-                .map(user -> {
-                    user.setActive(true);
-                    ApiResponse<UserProfile> response = new ApiResponse<>(true, "User profile activated successfully", user);
-                    return ResponseEntity.ok(response);
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null)));
+                .findFirst();
+
+        if (userOpt.isPresent()) {
+            userOpt.get().setActive(true);
+            return ResponseEntity.ok(new ApiResponse<>(true, "User profile activated successfully", userOpt.get()));
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null));
     }
 
     /**
@@ -162,16 +149,17 @@ public class UserProfileController {
      */
     @PatchMapping("/{userId}/deactivate")
     public ResponseEntity<ApiResponse<?>> deactivateUser(@PathVariable Long userId) {
-        return userProfiles.stream()
+        Optional<UserProfile> userOpt = userProfiles.stream()
                 .filter(user -> user.getUserId().equals(userId))
-                .findFirst()
-                .map(user -> {
-                    user.setActive(false);
-                    ApiResponse<UserProfile> response = new ApiResponse<>(true, "User profile deactivated successfully", user);
-                    return ResponseEntity.ok(response);
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null)));
+                .findFirst();
+
+        if (userOpt.isPresent()) {
+            userOpt.get().setActive(false);
+            return ResponseEntity.ok(new ApiResponse<>(true, "User profile deactivated successfully", userOpt.get()));
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null));
     }
 
     /**
@@ -181,8 +169,7 @@ public class UserProfileController {
     public ResponseEntity<ApiResponse<?>> deleteUser(@PathVariable Long userId) {
         boolean removed = userProfiles.removeIf(user -> user.getUserId().equals(userId));
         if (removed) {
-            ApiResponse<?> response = new ApiResponse<>(true, "User profile deleted successfully", null);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+            return ResponseEntity.ok(new ApiResponse<>(true, "User profile deleted successfully", null));
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(false, "User with ID " + userId + " not found", null));
