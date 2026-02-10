@@ -41,4 +41,4 @@ Spring Boot 3.2.0
 Java 17
 Maven
 Spring Web
-calCase rules.✅ RESTful Design: Uses proper HTTP verbs (GET, POST, PUT, PATCH, DELETE).✅ Response Wrapping: Consistent API responses using the ApiResponse utility class.Developed by: Murenzi CharlesStudent ID: 27386
+
